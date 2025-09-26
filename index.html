@@ -393,12 +393,27 @@
 
         // Adiciona um listener para garantir que o script só execute após o DOM estar pronto
         document.addEventListener('DOMContentLoaded', async () => {
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : null;
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            // ... código anterior (linhas 920 a 924)
+            
+            // 1. Sua Configuração REAL do Firebase (COLE AQUI O OBJETO QUE VOCÊ COPIOU)
+            const firebaseConfig = {
+              apiKey: "AIzaSyD-d...", 
+              authDomain: "registrocelulas-6d494.firebaseapp.com",
+              projectId: "registrocelulas-6d494", 
+              storageBucket: "registrocelulas-6d494.appspot.com",
+              messagingSenderId: "954829571447", 
+              appId: "1:954829571447:web:e129c64a7cc8eec758d72"
+            };
+
+            // 2. Usamos o projectId como appId (Substituindo a variável antiga)
+            const appId = firebaseConfig.projectId;
+
+            // 3. Deixamos o token de autenticação nulo, pois não usamos o token do ambiente Canvas
+            const initialAuthToken = null; 
 
             let db, auth, userId;
             let allWeeklyData = []; // Armazena todos os dados para filtragem
+// ...
             let currentMonth = new Date().getMonth();
             let currentYear = new Date().getFullYear();
 
