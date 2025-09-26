@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro da Célula</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #E2E8F0;
+        }
+
+        .container-card {
+            background-color: #1E1E1E;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-primary {
+            background-color: #1DB954;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: background-color 0.2s;
+        }
+
+        .button-primary:hover {
+            background-color: #1ed760;
+        }
+
+        .button-secondary {
+            background-color: #374151;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: background-color 0.2s;
+        }
+
+        .button-secondary:hover {
+            background-color: #4B5563;
+        }
+
+        .button-tab {
+            background-color: transparent;
+            color: #E2E8F0;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: background-color 0.2s;
+            padding: 0.5rem 1rem;
+        }
+
+        .button-tab.active {
+            background-color: #374151;
+        }
+
+        .button-tab:not(.active):hover {
+            background-color: #2D2D2D;
+        }
+
+        .input-field {
+            background-color: #2D2D2D;
+            border: 1px solid #4B5563;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            width: 100%;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        thead tr th {
+            background-color: #2D2D2D;
+            border-bottom: 2px solid #4B5563;
+            color: #9CA3AF;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #1A1A1A;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #1E1E1E;
+        }
+
+        .radio-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .radio-option input[type="radio"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #2D2D2D;
+            border: 2px solid #4B5563;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .radio-option input[type="radio"]:checked {
+            border-color: #1DB954;
+        }
+
+        .radio-option input[type="radio"]:checked::after {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            margin: 2px;
+            border-radius: 50%;
+            background-color: #1DB954;
+        }
+
+        /* Estilos do Calendário */
+        #calendar-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+
+        .calendar-day {
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            font-weight: 600;
+        }
+
+        .calendar-day:hover {
+            background-color: #2D2D2D;
+            transform: translateY(-2px);
+        }
+
+        .calendar-day.has-data {
+            background-color: #1DB954;
+            color: white;
+            font-weight: bold;
+        }
+
+        .calendar-day.current-day {
+            background-color: #555;
+        }
+
+        .calendar-day.empty {
+            cursor: default;
+            background-color: transparent;
+            pointer-events: none;
+        }
+
+        .calendar-header {
+            grid-column: span 7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="p-4 sm:p-8 flex flex-col items-center min-h-screen">
+    <main class="w-full max-w-4xl space-y-8">
+        <!-- Título Principal -->
+        <header class="text-center space-y-2">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white">Registro da Célula</h1>
+            <p class="text-lg text-gray-400">Gerencie a frequência dos encontros semanais.</p>
+        </header>
+
+        <!-- Navegação por Abas -->
+        <div class="flex justify-center space-x-2">
+            <button id="form-tab-btn" class="button-tab active">Formulário</button>
+            <button id="history-tab-btn" class="button-tab">Histórico</button>
+        </div>
+
+        <!-- Conteúdo do Formulário -->
+        <div id="form-view" class="container-card p-6 space-y-6">
+            <h2 class="text-2xl font-bold text-white">Registrar Frequência Semanal</h2>
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                <div class="flex-1">
+                    <label for="week-date" class="block text-sm font-medium text-gray-300 mb-2">Data</label>
+                    <input type="date" id="week-date" class="input-field" required>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-white">Célula</h3>
+                <div class="radio-container">
+                    <label class="radio-option">
+                        <input type="radio" name="celula" value="R119" checked> R119
+                    </label>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-white">Evento</h3>
+                <div class="radio-container">
+                    <label class="radio-option">
+                        <input type="radio" name="evento" value="CÉLULA" required> CÉLULA
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="evento" value="CULTO"> CULTO
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="evento" value="ORAÇÃO"> ORAÇÃO
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="evento" value="COMUNHÃO"> COMUNHÃO
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="evento" value="OUTRO"> OUTRO
+                    </label>
+                </div>
+            </div>
+            
+            <div id="frequencia-container" class="space-y-4">
+                <h3 class="text-lg font-bold text-white">Frequência</h3>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <label for="base-count" class="block text-sm font-medium text-gray-300 mb-2">Base</label>
+                        <input type="number" id="base-count" class="input-field" placeholder="0" min="0">
+                    </div>
+                    <div class="flex-1">
+                        <label for="membros-count" class="block text-sm font-medium text-gray-300 mb-2">Membros</label>
+                        <input type="number" id="membros-count" class="input-field" placeholder="0" min="0">
+                    </div>
+                    <div class="flex-1">
+                        <label for="convidados-count" class="block text-sm font-medium text-gray-300 mb-2">Convidados</label>
+                        <input type="number" id="convidados-count" class="input-field" placeholder="0" min="0">
+                    </div>
+                </div>
+            </div>
+            
+            <button id="add-week-btn" class="button-primary w-full sm:w-auto">Salvar Frequência da Semana</button>
+            <p id="message-display" class="text-sm text-center text-gray-400 mt-4"></p>
+        </div>
+
+        <!-- Conteúdo do Histórico -->
+        <div id="history-view" class="container-card p-6 hidden">
+            <h2 class="text-2xl font-bold text-white mb-4">Histórico de Frequência</h2>
+            
+            <!-- Resumo do Período -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-700 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Encontros</p>
+                    <p id="total-encontros" class="text-2xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Total Base</p>
+                    <p id="total-base" class="text-2xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Total Membros</p>
+                    <p id="total-membros" class="text-2xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Total Convidados</p>
+                    <p id="total-convidados" class="text-2xl font-bold text-white">0</p>
+                </div>
+            </div>
+
+            <hr class="border-gray-700 my-6">
+
+            <!-- Seção de Resumo Mensal -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white">Resumo Mensal</h3>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <label for="month-select" class="block text-sm font-medium text-gray-300 mb-2">Mês</label>
+                        <select id="month-select" class="input-field">
+                            <option value="0">Janeiro</option>
+                            <option value="1">Fevereiro</option>
+                            <option value="2">Março</option>
+                            <option value="3">Abril</option>
+                            <option value="4">Maio</option>
+                            <option value="5">Junho</option>
+                            <option value="6">Julho</option>
+                            <option value="7">Agosto</option>
+                            <option value="8">Setembro</option>
+                            <option value="9">Outubro</option>
+                            <option value="10">Novembro</option>
+                            <option value="11">Dezembro</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="year-select" class="block text-sm font-medium text-gray-300 mb-2">Ano</label>
+                        <select id="year-select" class="input-field"></select>
+                    </div>
+                </div>
+                <button id="view-monthly-summary-btn" class="button-primary">Visualizar Resumo</button>
+                <div id="monthly-summary-container" class="mt-4 hidden space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div class="bg-gray-700 p-4 rounded-lg text-center">
+                            <p class="text-sm text-gray-400">Encontros</p>
+                            <p id="monthly-encontros" class="text-2xl font-bold text-white">0</p>
+                        </div>
+                        <div class="bg-gray-700 p-4 rounded-lg text-center">
+                            <p class="text-sm text-gray-400">Total Base</p>
+                            <p id="monthly-base" class="text-2xl font-bold text-white">0</p>
+                        </div>
+                        <div class="bg-gray-700 p-4 rounded-lg text-center">
+                            <p class="text-sm text-gray-400">Total Membros</p>
+                            <p id="monthly-membros" class="text-2xl font-bold text-white">0</p>
+                        </div>
+                        <div class="bg-gray-700 p-4 rounded-lg text-center">
+                            <p class="text-sm text-gray-400">Total Convidados</p>
+                            <p id="monthly-convidados" class="text-2xl font-bold text-white">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-gray-700 my-6">
+
+            <!-- Navegação e Visualização do Calendário -->
+            <div class="space-y-4">
+                <div class="calendar-header">
+                    <button id="prev-month-btn" class="button-secondary p-2">&lt;</button>
+                    <h3 id="current-month-year"></h3>
+                    <button id="next-month-btn" class="button-secondary p-2">&gt;</button>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center font-bold text-gray-400">
+                    <div>Dom</div>
+                    <div>Seg</div>
+                    <div>Ter</div>
+                    <div>Qua</div>
+                    <div>Qui</div>
+                    <div>Sex</div>
+                    <div>Sáb</div>
+                </div>
+                <div id="calendar-container"></div>
+            </div>
+
+            <!-- Detalhes do dia selecionado -->
+            <div id="daily-details-container" class="mt-8 hidden">
+                <h3 class="text-xl font-bold text-white mb-4">Detalhes do Dia: <span id="selected-date"></span></h3>
+                <div id="daily-details-content" class="space-y-4">
+                    <!-- Detalhes do dia serão renderizados aqui -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal para mensagens de erro/sucesso -->
+    <div id="modal-message-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-6 rounded-lg text-center shadow-lg w-72">
+            <p id="modal-message-text" class="text-white mb-4"></p>
+            <button id="modal-close-btn" class="button-secondary">OK</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('debug');
+
+        // Adiciona um listener para garantir que o script só execute após o DOM estar pronto
+        document.addEventListener('DOMContentLoaded', async () => {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : null;
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            let db, auth, userId;
+            let allWeeklyData = []; // Armazena todos os dados para filtragem
+            let currentMonth = new Date().getMonth();
+            let currentYear = new Date().getFullYear();
+
+            const formTabBtn = document.getElementById('form-tab-btn');
+            const historyTabBtn = document.getElementById('history-tab-btn');
+            const formView = document.getElementById('form-view');
+            const historyView = document.getElementById('history-view');
+
+            const dateInput = document.getElementById('week-date');
+            const eventRadios = document.querySelectorAll('input[name="evento"]');
+            const frequenciaContainer = document.getElementById('frequencia-container');
+            const baseCountInput = document.getElementById('base-count');
+            const membrosCountInput = document.getElementById('membros-count');
+            const convidadosCountInput = document.getElementById('convidados-count');
+            const addWeekBtn = document.getElementById('add-week-btn');
+            const historicalDataBody = document.getElementById('historical-data-body');
+            const userIdDisplay = document.getElementById('user-id-display');
+            
+            const totalEncontrosEl = document.getElementById('total-encontros');
+            const totalBaseEl = document.getElementById('total-base');
+            const totalMembrosEl = document.getElementById('total-membros');
+            const totalConvidadosEl = document.getElementById('total-convidados');
+
+            const modalMessageContainer = document.getElementById('modal-message-container');
+            const modalMessageText = document.getElementById('modal-message-text');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            const calendarContainer = document.getElementById('calendar-container');
+            const currentMonthYearEl = document.getElementById('current-month-year');
+            const prevMonthBtn = document.getElementById('prev-month-btn');
+            const nextMonthBtn = document.getElementById('next-month-btn');
+            const dailyDetailsContainer = document.getElementById('daily-details-container');
+            const dailyDetailsContent = document.getElementById('daily-details-content');
+            const selectedDateEl = document.getElementById('selected-date');
+
+            const monthSelect = document.getElementById('month-select');
+            const yearSelect = document.getElementById('year-select');
+            const viewMonthlySummaryBtn = document.getElementById('view-monthly-summary-btn');
+            const monthlySummaryContainer = document.getElementById('monthly-summary-container');
+            const monthlyEncontrosEl = document.getElementById('monthly-encontros');
+            const monthlyBaseEl = document.getElementById('monthly-base');
+            const monthlyMembrosEl = document.getElementById('monthly-membros');
+            const monthlyConvidadosEl = document.getElementById('monthly-convidados');
+
+            let isAuthReady = false;
+
+            // Função para exibir o modal de mensagem
+            function showModalMessage(message) {
+                if (modalMessageText && modalMessageContainer) {
+                    modalMessageText.textContent = message;
+                    modalMessageContainer.classList.remove('hidden');
+                } else {
+                    console.error("Erro: Elementos do modal não encontrados.");
+                }
+            }
+
+            if (modalCloseBtn) {
+                modalCloseBtn.addEventListener('click', () => {
+                    if (modalMessageContainer) {
+                        modalMessageContainer.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Função para alternar entre as visualizações
+            function switchView(view) {
+                if (formView && historyView && formTabBtn && historyTabBtn) {
+                    if (view === 'form') {
+                        formView.classList.remove('hidden');
+                        historyView.classList.add('hidden');
+                        formTabBtn.classList.add('active');
+                        historyTabBtn.classList.remove('active');
+                    } else {
+                        formView.classList.add('hidden');
+                        historyView.classList.remove('hidden');
+                        formTabBtn.classList.remove('active');
+                        historyTabBtn.classList.add('active');
+                        renderCalendar();
+                    }
+                }
+            }
+
+            // Listeners para os botões de navegação
+            if (formTabBtn) {
+                formTabBtn.addEventListener('click', () => switchView('form'));
+            }
+            if (historyTabBtn) {
+                historyTabBtn.addEventListener('click', () => switchView('history'));
+            }
+
+            async function initializeFirebase() {
+                try {
+                    // Adicionada a verificação para garantir que firebaseConfig não é nulo ou vazio
+                    if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                        showModalMessage("As configurações do Firebase não foram encontradas. Verifique se o app está no ambiente correto.");
+                        return;
+                    }
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            if (userIdDisplay) {
+                                userIdDisplay.textContent = userId;
+                            }
+                            isAuthReady = true;
+                            console.log("Autenticado com sucesso. ID do usuário:", userId);
+                            setupRealtimeListeners();
+                        } else {
+                            userId = null;
+                            if (userIdDisplay) {
+                                userIdDisplay.textContent = 'Não autenticado';
+                            }
+                            isAuthReady = false;
+                            console.log("Usuário não autenticado.");
+                            showModalMessage("Erro ao conectar ao banco de dados.");
+                        }
+                    });
+                } catch (error) {
+                    console.error("Erro ao inicializar o Firebase:", error);
+                    showModalMessage("Erro ao conectar ao banco de dados.");
+                }
+            }
+
+            function setupRealtimeListeners() {
+                if (!isAuthReady) return;
+
+                const publicDataPath = `artifacts/${appId}/public/data/celula_frequencia`;
+                const q = query(collection(db, publicDataPath));
+
+                onSnapshot(q, (querySnapshot) => {
+                    allWeeklyData = [];
+                    querySnapshot.forEach((doc) => {
+                        allWeeklyData.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderTotalSummary(allWeeklyData);
+                    renderCalendar();
+                    populateYearSelect();
+                    console.log("Dados de frequência atualizados:", allWeeklyData);
+                }, (error) => {
+                    console.error("Erro ao obter dados em tempo real:", error);
+                    showModalMessage("Erro ao carregar os dados.");
+                });
+            }
+
+            function renderTotalSummary(data) {
+                let totalBase = 0;
+                let totalMembros = 0;
+                let totalConvidados = 0;
+
+                data.forEach((week) => {
+                    totalBase += week.base || 0;
+                    totalMembros += week.membros || 0;
+                    totalConvidados += week.convidados || 0;
+                });
+
+                if (totalEncontrosEl) totalEncontrosEl.textContent = data.length;
+                if (totalBaseEl) totalBaseEl.textContent = totalBase;
+                if (totalMembrosEl) totalMembrosEl.textContent = totalMembros;
+                if (totalConvidadosEl) totalConvidadosEl.textContent = totalConvidados;
+            }
+
+            // Renderiza o calendário
+            function renderCalendar() {
+                if (!calendarContainer) return;
+
+                calendarContainer.innerHTML = '';
+                dailyDetailsContainer.classList.add('hidden');
+
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                currentMonthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+                const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+                // Adiciona dias vazios para o espaçamento inicial
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day empty';
+                    calendarContainer.appendChild(emptyDay);
+                }
+
+                // Adiciona os dias do mês
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day bg-gray-700';
+                    dayElement.textContent = day;
+
+                    const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const hasData = allWeeklyData.some(item => item.date === dateString);
+
+                    if (hasData) {
+                        dayElement.classList.add('has-data');
+                        dayElement.addEventListener('click', () => showDailyDetails(dateString));
+                    }
+                    
+                    const today = new Date();
+                    if (day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                        dayElement.classList.add('current-day');
+                    }
+
+                    calendarContainer.appendChild(dayElement);
+                }
+            }
+
+            function showDailyDetails(date) {
+                const dayData = allWeeklyData.filter(item => item.date === date);
+                if (!dailyDetailsContainer || !dailyDetailsContent) return;
+
+                selectedDateEl.textContent = date;
+                dailyDetailsContent.innerHTML = '';
+
+                if (dayData.length > 0) {
+                    dayData.forEach(item => {
+                        const total = (item.base || 0) + (item.membros || 0) + (item.convidados || 0);
+                        const card = document.createElement('div');
+                        card.className = 'bg-gray-700 p-4 rounded-lg space-y-2';
+                        card.innerHTML = `
+                            <p class="font-bold text-lg">${item.evento}</p>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="bg-gray-800 p-2 rounded-lg">
+                                    <p class="text-sm text-gray-400">Base</p>
+                                    <p class="font-bold">${item.base}</p>
+                                </div>
+                                <div class="bg-gray-800 p-2 rounded-lg">
+                                    <p class="text-sm text-gray-400">Membros</p>
+                                    <p class="font-bold">${item.membros}</p>
+                                </div>
+                                <div class="bg-gray-800 p-2 rounded-lg">
+                                    <p class="text-sm text-gray-400">Convidados</p>
+                                    <p class="font-bold">${item.convidados}</p>
+                                </div>
+                            </div>
+                            <p class="text-right font-bold text-green-400">Total: ${total}</p>
+                        `;
+                        dailyDetailsContent.appendChild(card);
+                    });
+                } else {
+                    dailyDetailsContent.innerHTML = `<p class="text-center text-gray-400">Nenhum registro para este dia.</p>`;
+                }
+                dailyDetailsContainer.classList.remove('hidden');
+            }
+
+            if (prevMonthBtn) {
+                prevMonthBtn.addEventListener('click', () => {
+                    currentMonth--;
+                    if (currentMonth < 0) {
+                        currentMonth = 11;
+                        currentYear--;
+                    }
+                    renderCalendar();
+                });
+            }
+
+            if (nextMonthBtn) {
+                nextMonthBtn.addEventListener('click', () => {
+                    currentMonth++;
+                    if (currentMonth > 11) {
+                        currentMonth = 0;
+                        currentYear++;
+                    }
+                    renderCalendar();
+                });
+            }
+
+            // Popula o seletor de ano com anos recentes
+            function populateYearSelect() {
+                if (!yearSelect) return;
+                const currentYear = new Date().getFullYear();
+                yearSelect.innerHTML = '';
+                for (let i = currentYear; i >= currentYear - 10; i--) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    yearSelect.appendChild(option);
+                }
+            }
+
+            if (viewMonthlySummaryBtn) {
+                viewMonthlySummaryBtn.addEventListener('click', () => {
+                    const selectedMonth = parseInt(monthSelect.value);
+                    const selectedYear = parseInt(yearSelect.value);
+
+                    const filteredData = allWeeklyData.filter(item => {
+                        const itemDate = new Date(item.date);
+                        return itemDate.getFullYear() === selectedYear && itemDate.getMonth() === selectedMonth;
+                    });
+
+                    let totalBase = 0;
+                    let totalMembros = 0;
+                    let totalConvidados = 0;
+
+                    filteredData.forEach(item => {
+                        totalBase += item.base || 0;
+                        totalMembros += item.membros || 0;
+                        totalConvidados += item.convidados || 0;
+                    });
+
+                    if (monthlyEncontrosEl) monthlyEncontrosEl.textContent = filteredData.length;
+                    if (monthlyBaseEl) monthlyBaseEl.textContent = totalBase;
+                    if (monthlyMembrosEl) monthlyMembrosEl.textContent = totalMembros;
+                    if (monthlyConvidadosEl) monthlyConvidadosEl.textContent = totalConvidados;
+
+                    if (monthlySummaryContainer) {
+                        monthlySummaryContainer.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // Evento para mostrar ou esconder os campos de frequência
+            eventRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (frequenciaContainer) {
+                        frequenciaContainer.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Evento do botão para adicionar nova frequência
+            if (addWeekBtn) {
+                addWeekBtn.addEventListener('click', async () => {
+                    if (!isAuthReady) {
+                        showModalMessage("Aguardando autenticação...");
+                        return;
+                    }
+
+                    const weekDate = dateInput.value;
+                    const selectedCelula = document.querySelector('input[name="celula"]:checked')?.value;
+                    const selectedEvento = document.querySelector('input[name="evento"]:checked')?.value;
+
+                    if (!weekDate || !selectedCelula || !selectedEvento) {
+                        showModalMessage("Por favor, preencha a data e selecione a célula e o evento.");
+                        return;
+                    }
+                    
+                    const publicDataPath = `artifacts/${appId}/public/data/celula_frequencia`;
+                    
+                    let dataToSave = {
+                        date: weekDate,
+                        celula: selectedCelula,
+                        evento: selectedEvento
+                    };
+
+                    dataToSave.base = parseInt(baseCountInput.value) || 0;
+                    dataToSave.membros = parseInt(membrosCountInput.value) || 0;
+                    dataToSave.convidados = parseInt(convidadosCountInput.value) || 0;
+
+                    try {
+                        await addDoc(collection(db, publicDataPath), dataToSave);
+                        showModalMessage("Frequência salva com sucesso!");
+                        dateInput.value = '';
+                        const checkedEventRadio = document.querySelector('input[name="evento"]:checked');
+                        if (checkedEventRadio) {
+                            checkedEventRadio.checked = false;
+                        }
+                        if (baseCountInput) baseCountInput.value = '';
+                        if (membrosCountInput) membrosCountInput.value = '';
+                        if (convidadosCountInput) convidadosCountInput.value = '';
+                    } catch (error) {
+                        console.error("Erro ao salvar a frequência:", error);
+                        showModalMessage("Erro ao salvar a frequência. Tente novamente.");
+                    }
+                });
+            }
+
+            initializeFirebase();
+        });
+    </script>
+</body>
+
+</html>
