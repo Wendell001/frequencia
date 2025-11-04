@@ -549,7 +549,7 @@
             function setupRealtimeListeners() {
                 if (!isAuthReady) return;
 
-                const publicDataPath = `artifacts/${appId}/public/data/celula_frequencia`;
+                const publicDataPath = `celula_frequencia`;
                 const q = query(collection(db, publicDataPath));
 
                 onSnapshot(q, (querySnapshot) => {
@@ -757,7 +757,7 @@
                         return;
                     }
                     
-                    const publicDataPath = `artifacts/${appId}/public/data/celula_frequencia`;
+                    const publicDataPath = `celula_frequencia`;
                     
                     let dataToSave = {
                         date: weekDate,
