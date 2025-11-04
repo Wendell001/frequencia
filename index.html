@@ -504,9 +504,8 @@
                 historyTabBtn.addEventListener('click', () => switchView('history'));
             }
 
-            async function initializeFirebase() {
+           async function initializeFirebase() {
                 try {
-                    // Adicionada a verificação para garantir que firebaseConfig não é nulo ou vazio
                     if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
                         showModalMessage("As configurações do Firebase não foram encontradas. Verifique se o app está no ambiente correto.");
                         return;
@@ -515,46 +514,41 @@
                     db = getFirestore(app);
                     auth = getAuth(app);
 
-                   try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        // Isso nos mostrará o erro real se o login falhar
-                        console.error("Erro detalhado no login anônimo:", error);
-                        showModalMessage(`Erro de Autenticação: ${error.code}`);
-                    }
-
-                    onAuthStateChanged(auth, (user) => {
+                    // O 'ouvinte' de autenticação é a nossa única fonte de verdade
+                    onAuthStateChanged(auth, async (user) => {
                         if (user) {
+                            // Usuário está logado (anônimo ou não)
                             userId = user.uid;
-                            if (userIdDisplay) {
-                                userIdDisplay.textContent = userId;
-                            }
                             isAuthReady = true;
-                            console.log("Autenticado com sucesso. ID do usuário:", userId);
+                            console.log("Autenticado com sucesso. ID:", userId);
+                            
+                            // AGORA que temos certeza que o user existe, ouvimos o banco de dados
                             setupRealtimeListeners();
+
                         } else {
-                            userId = null;
-                            if (userIdDisplay) {
-                                userIdDisplay.textContent = 'Não autenticado';
-                            }
+                            // Usuário não está logado
                             isAuthReady = false;
-                            console.log("Usuário não autenticado.");
-                            showModalMessage("Erro ao conectar ao banco de dados.");
+                            console.log("Usuário não autenticado. Tentando login anônimo...");
+                            try {
+                                // Tentamos fazer o login anônimo
+                                await signInAnonymously(auth);
+                                // Se o login for bem-sucedido, o onAuthStateChanged
+                                // será chamado NOVAMENTE, e desta vez entrará no 'if (user)'.
+                            } catch (error) {
+                                console.error("Erro detalhado no login anônimo:", error);
+                                // Se o login anônimo falhar (ex: Auth desabilitado), mostramos o erro
+                                showModalMessage(`Erro de Autenticação: ${error.code}`);
+                            }
                         }
                     });
                 } catch (error) {
                     console.error("Erro ao inicializar o Firebase:", error);
-                    showModalMessage("Erro ao conectar ao banco de dados.");
+                    showModalMessage(`Erro de Inicialização: ${error.message}`);
                 }
             }
 
-            function setupRealtimeListeners() {
-                if (!isAuthReady) return;
-
+           function setupRealtimeListeners() {
+                // Esta função agora só é chamada DEPOIS que a autenticação é confirmada
                 const publicDataPath = `celula_frequencia`;
                 const q = query(collection(db, publicDataPath));
 
@@ -569,7 +563,8 @@
                     console.log("Dados de frequência atualizados:", allWeeklyData);
                 }, (error) => {
                     console.error("Erro ao obter dados em tempo real:", error);
-                    showModalMessage("Erro ao carregar os dados.");
+                    // Se o erro ainda acontecer aqui, é 100% um problema nas Regras do Firestore
+                    showModalMessage("Erro ao carregar os dados. Verifique as Regras do Firestore.");
                 });
             }
 
