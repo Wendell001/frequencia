@@ -515,10 +515,16 @@
                     db = getFirestore(app);
                     auth = getAuth(app);
 
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
+                   try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        // Isso nos mostrará o erro real se o login falhar
+                        console.error("Erro detalhado no login anônimo:", error);
+                        showModalMessage(`Erro de Autenticação: ${error.code}`);
                     }
 
                     onAuthStateChanged(auth, (user) => {
