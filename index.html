@@ -203,6 +203,7 @@
         <div class="flex justify-center space-x-2">
             <button id="form-tab-btn" class="button-tab active">Formulário</button>
             <button id="history-tab-btn" class="button-tab">Histórico</button>
+            <button id="all-records-tab-btn" class="button-tab">Todos os Registros</button>
         </div>
 
         <!-- Conteúdo do Formulário -->
@@ -372,6 +373,28 @@
             </div>
 
         </div>
+        <!-- Aba: Todos os Registros -->
+<div id="all-records-view" class="hidden container-card p-6 mt-8">
+    <h2 class="text-xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Lista Completa de Encontros</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-gray-700 text-gray-400 text-sm">
+                    <th class="py-3 px-4">Data</th>
+                    <th class="py-3 px-4">Célula</th>
+                    <th class="py-3 px-4">Evento</th>
+                    <th class="py-3 px-4 text-center">Base</th>
+                    <th class="py-3 px-4 text-center">Membros</th>
+                    <th class="py-3 px-4 text-center">Convidados</th>
+                    <th class="py-3 px-4 text-center text-green-400">Total</th>
+                </tr>
+            </thead>
+            <tbody id="all-records-table-body" class="text-gray-300 text-sm">
+                <!-- As linhas serão inseridas aqui via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
 
     </main>
 
@@ -421,6 +444,9 @@
             const historyTabBtn = document.getElementById('history-tab-btn');
             const formView = document.getElementById('form-view');
             const historyView = document.getElementById('history-view');
+            const allRecordsTabBtn = document.getElementById('all-records-tab-btn');
+            const allRecordsView = document.getElementById('all-records-view');
+            const allRecordsTableBody = document.getElementById('all-records-table-body');
 
             const dateInput = document.getElementById('week-date');
             const eventRadios = document.querySelectorAll('input[name="evento"]');
@@ -480,29 +506,34 @@
 
             // Função para alternar entre as visualizações
             function switchView(view) {
-                if (formView && historyView && formTabBtn && historyTabBtn) {
-                    if (view === 'form') {
-                        formView.classList.remove('hidden');
-                        historyView.classList.add('hidden');
-                        formTabBtn.classList.add('active');
-                        historyTabBtn.classList.remove('active');
-                    } else {
-                        formView.classList.add('hidden');
-                        historyView.classList.remove('hidden');
-                        formTabBtn.classList.remove('active');
-                        historyTabBtn.classList.add('active');
-                        renderCalendar();
-                    }
-                }
-            }
+               // Oculta todas as telas
+    formView.classList.add('hidden');
+    historyView.classList.add('hidden');
+    if (allRecordsView) allRecordsView.classList.add('hidden');
+    
+    // Remove a cor (active) de todos os botões
+    formTabBtn.classList.remove('active');
+    historyTabBtn.classList.remove('active');
+    if (allRecordsTabBtn) allRecordsTabBtn.classList.remove('active');
 
-            // Listeners para os botões de navegação
-            if (formTabBtn) {
-                formTabBtn.addEventListener('click', () => switchView('form'));
-            }
-            if (historyTabBtn) {
-                historyTabBtn.addEventListener('click', () => switchView('history'));
-            }
+    // Mostra a tela correta baseada no botão clicado
+    if (view === 'form') {
+        formView.classList.remove('hidden');
+        formTabBtn.classList.add('active');
+    } else if (view === 'history') {
+        historyView.classList.remove('hidden');
+        historyTabBtn.classList.add('active');
+        renderCalendar();
+    } else if (view === 'all-records') {
+        if (allRecordsView) allRecordsView.classList.remove('hidden');
+        if (allRecordsTabBtn) allRecordsTabBtn.classList.add('active');
+    }
+} // Fim da function switchView
+
+// Listeners para os botões de navegação
+if (formTabBtn) formTabBtn.addEventListener('click', () => switchView('form'));
+if (historyTabBtn) historyTabBtn.addEventListener('click', () => switchView('history'));
+if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchView('all-records'));
 
            async function initializeFirebase() {
                 try {
@@ -560,6 +591,7 @@
                     renderTotalSummary(allWeeklyData);
                     renderCalendar();
                     populateYearSelect();
+                    renderAllRecordsTable(allWeeklyData);
                     console.log("Dados de frequência atualizados:", allWeeklyData);
                 }, (error) => {
                     console.error("Erro ao obter dados em tempo real:", error);
@@ -787,6 +819,41 @@
                     }
                 });
             }
+
+// Função para renderizar a tabela com todos os registros
+function renderAllRecordsTable(data) {
+    if (!allRecordsTableBody) return;
+    allRecordsTableBody.innerHTML = ''; // Limpa a tabela
+
+    // Ordena os dados pela data (do mais recente para o mais antigo)
+    const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (sortedData.length === 0) {
+        allRecordsTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-gray-500">Nenhum registro encontrado.</td></tr>`;
+        return;
+    }
+
+    sortedData.forEach(record => {
+        const base = Number(record.base || 0);
+        const membros = Number(record.membros || 0);
+        const convidados = Number(record.convidados || 0);
+        const total = base + membros + convidados;
+
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-800 hover:bg-gray-800 transition-colors';
+        tr.innerHTML = `
+            <td class="py-3 px-4">${record.date}</td>
+            <td class="py-3 px-4 font-bold">${record.celula || 'N/A'}</td>
+            <td class="py-3 px-4 text-xs">${record.evento || 'N/A'}</td>
+            <td class="py-3 px-4 text-center">${base}</td>
+            <td class="py-3 px-4 text-center">${membros}</td>
+            <td class="py-3 px-4 text-center">${convidados}</td>
+            <td class="py-3 px-4 text-center font-bold text-green-400">${total}</td>
+        `;
+        allRecordsTableBody.appendChild(tr);
+    });
+}
+            
 
             initializeFirebase();
         });
