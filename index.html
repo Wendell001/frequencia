@@ -448,7 +448,7 @@
               apiKey: "AIzaSyD8AyVw3pairdOxbS86DBBj9WOJHSyKdhw", 
               authDomain: "registrocelulas-6d494.firebaseapp.com",
               projectId: "registrocelulas-6d494", 
-              storageBucket: "registrocelulas-6d494.appspot.com",
+              storageBucket: "registrocelulas-6d494.firebasestorage.app",
               messagingSenderId: "954829571447", 
               appId: "1:954829571447:web:e129c64a7cc8eec758d72"
             };
@@ -592,6 +592,27 @@ function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
 if (formTabBtn) formTabBtn.addEventListener('click', () => switchView('form'));
 if (historyTabBtn) historyTabBtn.addEventListener('click', () => switchView('history'));
 if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchView('all-records'));
+
+            // Função para reduzir o tamanho da imagem antes do envio
+async function comprimirImagem(file, maxWidth = 800) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scaleSize = maxWidth / Math.max(img.width, maxWidth);
+        canvas.width = Math.min(img.width, maxWidth);
+        canvas.height = img.height * (canvas.width / img.width);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+      };
+    };
+  });
+}
 
            async function initializeFirebase() {
                 try {
