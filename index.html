@@ -251,7 +251,14 @@
                     </label>
                 </div>
             </div>
-            
+            <div id="login-container" class="text-center p-4 bg-gray-800 rounded-lg mb-6 border border-gray-700">
+  <p id="login-message" class="text-gray-300 mb-3 text-sm">Faça login com sua conta do Google para registrar a frequência.</p>
+  <button id="btn-login" type="button" class="bg-white text-gray-900 font-bold py-2 px-4 rounded-lg inline-flex items-center justify-center hover:bg-gray-100 transition-colors">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" class="w-5 h-5 mr-2">
+    Entrar com o Google
+  </button>
+  <p id="user-info" class="text-green-400 font-semibold text-sm hidden"></p>
+</div>
             <div id="frequencia-container" class="space-y-4">
                 <h3 class="text-lg font-bold text-white">Frequência</h3>
                 <div class="flex flex-col sm:flex-row gap-4">
@@ -425,7 +432,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup,  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
@@ -597,33 +604,46 @@ if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchVie
                     storage = getStorage(app);
                     auth = getAuth(app);
 
-                    // O 'ouvinte' de autenticação é a nossa única fonte de verdade
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            // Usuário está logado (anônimo ou não)
-                            userId = user.uid;
-                            isAuthReady = true;
-                            console.log("Autenticado com sucesso. ID:", userId);
-                            
-                            // AGORA que temos certeza que o user existe, ouvimos o banco de dados
-                            setupRealtimeListeners();
+                   const provider = new GoogleAuthProvider();
+    const btnLogin = document.getElementById('btn-login');
+    const userInfo = document.getElementById('user-info');
+    const loginMessage = document.getElementById('login-message');
 
-                        } else {
-                            // Usuário não está logado
-                            isAuthReady = false;
-                            console.log("Usuário não autenticado. Tentando login anônimo...");
-                            try {
-                                // Tentamos fazer o login anônimo
-                                await signInAnonymously(auth);
-                                // Se o login for bem-sucedido, o onAuthStateChanged
-                                // será chamado NOVAMENTE, e desta vez entrará no 'if (user)'.
-                            } catch (error) {
-                                console.error("Erro detalhado no login anônimo:", error);
-                                // Se o login anônimo falhar (ex: Auth desabilitado), mostramos o erro
-                                showModalMessage(`Erro de Autenticação: ${error.code}`);
-                            }
-                        }
-                    });
+    // Ação de clicar no botão de login
+    btnLogin.addEventListener('click', async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("Erro no login", error);
+        showModalMessage("Erro ao fazer login. Tente novamente.");
+      }
+    });
+
+    // O 'ouvinte' de autenticação que controla o que aparece na tela
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Se o usuário fez login com o Google
+        userId = user.uid;
+        isAuthReady = true;
+        
+        // Esconde o botão e mostra o e-mail da pessoa
+        btnLogin.classList.add('hidden');
+        loginMessage.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        userInfo.textContent = `Logado como: ${user.email}`;
+        
+        console.log("Autenticado com sucesso:", user.email);
+        setupRealtimeListeners(); 
+      } else {
+        // Se não tem ninguém logado
+        isAuthReady = false;
+        
+        // Mostra o botão pedindo login
+        btnLogin.classList.remove('hidden');
+        loginMessage.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+      }
+    });
                 } catch (error) {
                     console.error("Erro ao inicializar o Firebase:", error);
                     showModalMessage(`Erro de Inicialização: ${error.message}`);
@@ -871,7 +891,8 @@ if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchVie
                         date: weekDate,
                         celula: selectedCelula,
                         evento: selectedEvento,
-                        foto: fotoUrl
+                        foto: fotoUrl,
+                        criadoPor: auth.currentUser.email
                     };
 
                     dataToSave.base = parseInt(baseCountInput.value) || 0;
