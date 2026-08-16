@@ -269,8 +269,19 @@
                     </div>
                 </div>
             </div>
+            <div class="mb-4 mt-4">
+  <label for="fotoEncontro" class="block text-sm font-medium text-gray-300 mb-1">
+    Foto do Encontro (Opcional)
+  </label>
+  <input 
+    type="file" 
+    id="fotoEncontro" 
+    accept="image/*" 
+    class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer bg-gray-800 border border-gray-700 rounded-lg p-1.5 focus:outline-none"
+  >
+</div>
             
-            <button id="add-week-btn" class="button-primary w-full sm:w-auto">Salvar Frequência da Semana</button>
+            <button id="" class="button-primary w-full sm:w-auto">Salvar Frequência da Semana</button>
             <p id="message-display" class="text-sm text-center text-gray-400 mt-4"></p>
         </div>
 
@@ -417,6 +428,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         setLogLevel('debug');
 
@@ -440,7 +452,40 @@
             // 3. Deixamos o token de autenticação nulo, pois não usamos o token do ambiente Canvas
             const initialAuthToken = null; 
 
-            let db, auth, userId;
+            let db, auth, userId, storage;
+
+            // Função para comprimir a imagem antes de enviar
+function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        } else if (height > maxHeight) {
+          width *= maxHeight / height;
+          height = maxHeight;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+      };
+    };
+  });
+}
+            
             let allWeeklyData = []; // Armazena todos os dados para filtragem
 // ...
             let currentMonth = new Date().getMonth();
@@ -460,7 +505,7 @@
             const baseCountInput = document.getElementById('base-count');
             const membrosCountInput = document.getElementById('membros-count');
             const convidadosCountInput = document.getElementById('convidados-count');
-            const addWeekBtn = document.getElementById('add-week-btn');
+            const addWeekBtn = document.getElementById('');
             const historicalDataBody = document.getElementById('historical-data-body');
             const userIdDisplay = document.getElementById('user-id-display');
             
@@ -549,6 +594,7 @@ if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchVie
                     }
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
+                    storage = getStorage(app);
                     auth = getAuth(app);
 
                     // O 'ouvinte' de autenticação é a nossa única fonte de verdade
@@ -797,11 +843,35 @@ if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchVie
                     }
                     
                     const publicDataPath = `celula_frequencia`;
+
+                    let fotoUrl = null;
+    const fotoInput = document.getElementById("fotoEncontro");
+
+    if (fotoInput && fotoInput.files.length > 0) {
+      showModalMessage("Comprimindo e enviando foto... Aguarde.");
+      try {
+        const arquivoOriginal = fotoInput.files[0];
+        const arquivoComprimido = await comprimirImagem(arquivoOriginal);
+
+        // Cria um nome único com a data atual para não sobrepor fotos
+        const nomeArquivo = `fotos_encontros/${Date.now()}_${arquivoOriginal.name.replace(/\s+/g, '_')}`;
+        const fotoRef = ref(storage, nomeArquivo);
+
+        // Faz o upload e pega o link permanente
+        await uploadBytes(fotoRef, arquivoComprimido);
+        fotoUrl = await getDownloadURL(fotoRef);
+      } catch (error) {
+        console.error("Erro no upload da foto: ", error);
+        showModalMessage("Erro ao enviar a foto. Verifique a conexão.");
+        return; // Para o processo se a foto der erro
+      }
+    }
                     
                     let dataToSave = {
                         date: weekDate,
                         celula: selectedCelula,
-                        evento: selectedEvento
+                        evento: selectedEvento,
+                        foto: fotoUrl
                     };
 
                     dataToSave.base = parseInt(baseCountInput.value) || 0;
@@ -817,6 +887,7 @@ if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchVie
                             checkedEventRadio.checked = false;
                         }
                         if (baseCountInput) baseCountInput.value = '';
+                        if (fotoInput) fotoInput.value = '';
                         if (membrosCountInput) membrosCountInput.value = '';
                         if (convidadosCountInput) convidadosCountInput.value = '';
                     } catch (error) {
