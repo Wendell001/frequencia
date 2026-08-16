@@ -433,7 +433,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup,  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
@@ -899,22 +899,59 @@ if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchVie
                     dataToSave.membros = parseInt(membrosCountInput.value) || 0;
                     dataToSave.convidados = parseInt(convidadosCountInput.value) || 0;
 
-                    try {
-                        await addDoc(collection(db, publicDataPath), dataToSave);
-                        showModalMessage("Frequência salva com sucesso!");
-                        dateInput.value = '';
-                        const checkedEventRadio = document.querySelector('input[name="evento"]:checked');
-                        if (checkedEventRadio) {
-                            checkedEventRadio.checked = false;
-                        }
-                        if (baseCountInput) baseCountInput.value = '';
-                        if (fotoInput) fotoInput.value = '';
-                        if (membrosCountInput) membrosCountInput.value = '';
-                        if (convidadosCountInput) convidadosCountInput.value = '';
-                    } catch (error) {
-                        console.error("Erro ao salvar a frequência:", error);
-                        showModalMessage("Erro ao salvar a frequência. Tente novamente.");
-                    }
+                   try {
+      // 1. O sistema pesquisa se já existe um registro idêntico
+      const q = query(
+        collection(db, publicDataPath),
+        where("celula", "==", selectedCelula),
+        where("evento", "==", selectedEvento),
+        where("date", "==", weekDate)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      // Se a pessoa não anexou uma nova foto, removemos o campo foto do envio
+      // para não apagar a foto que já estava salva antes na atualização
+      if (!fotoUrl) {
+        delete dataToSave.foto;
+      }
+
+      // 2. Se encontrar um registro, pergunta se quer atualizar
+      if (!querySnapshot.empty) {
+        const docExistente = querySnapshot.docs[0]; // Pega o arquivo antigo
+        
+        // Exibe a janelinha de confirmação na tela
+        const confirmar = confirm(`Já existe um registro de ${selectedEvento} para a célula ${selectedCelula} no dia ${weekDate}.\n\nDeseja atualizar e sobrescrever os dados?`);
+        
+        if (confirmar) {
+          // Atualiza o arquivo existente com os novos dados
+          await updateDoc(doc(db, publicDataPath, docExistente.id), dataToSave);
+          showModalMessage("Frequência atualizada com sucesso!");
+        } else {
+          // Se ela clicar em Cancelar, nada é feito
+          showModalMessage("Envio cancelado. Os dados anteriores foram mantidos.");
+          return;
+        }
+        
+      } else {
+        // 3. Se não encontrar nenhum registro, salva como um novo normalmente
+        await addDoc(collection(db, publicDataPath), dataToSave);
+        showModalMessage("Frequência salva com sucesso!");
+      }
+
+      // 4. Limpa todos os campos da tela para o próximo uso
+      dateInput.value = '';
+      const checkedEventRadio = document.querySelector('input[name="evento"]:checked');
+      if (checkedEventRadio) checkedEventRadio.checked = false;
+      if (baseCountInput) baseCountInput.value = '';
+      if (membrosCountInput) membrosCountInput.value = '';
+      if (convidadosCountInput) convidadosCountInput.value = '';
+      if (fotoInput) fotoInput.value = '';
+
+    } catch (error) {
+      console.error("Erro ao salvar a frequência:", error);
+      showModalMessage("Erro ao salvar a frequência. Verifique o console.");
+    }
                 });
             }
 
