@@ -277,7 +277,7 @@
                 </div>
             </div>
             <div class="mb-4 mt-4">
-  <label for="fotoEncontro" class="block text-sm font-medium text-gray-300 mb-1">
+  <label for="" class="block text-sm font-medium text-gray-300 mb-1">
     Foto do Encontro (Opcional)
   </label>
   <input 
@@ -631,7 +631,7 @@ async function comprimirImagem(file, maxWidth = 800) {
     const loginMessage = document.getElementById('login-message');
 
     // Ação de clicar no botão de login
-    btnLogin.addEventListener('click', async () => {
+    btnLogin.addEventListener('', async () => {
       try {
         await signInWithPopup(auth, provider);
       } catch (error) {
@@ -877,7 +877,8 @@ async function comprimirImagem(file, maxWidth = 800) {
                     const weekDate = dateInput.value;
                     const selectedCelula = document.querySelector('input[name="celula"]:checked')?.value;
                     const selectedEvento = document.querySelector('input[name="evento"]:checked')?.value;
-
+console.log("Verificando os dados: Data=", weekDate, " | Célula=", selectedCelula, " | Evento=", selectedEvento);
+                    
                     if (!weekDate || !selectedCelula || !selectedEvento) {
                         showModalMessage("Por favor, preencha a data e selecione a célula e o evento.");
                         return;
