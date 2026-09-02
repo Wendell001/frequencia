@@ -204,6 +204,7 @@
             <button id="form-tab-btn" class="button-tab active">Formulário</button>
             <button id="history-tab-btn" class="button-tab">Histórico</button>
             <button id="all-records-tab-btn" class="button-tab">Todos os Registros</button>
+            <button id="relatorios-tab-btn" class="px-4 py-2 rounded-full text-sm font-semibold text-gray-400 hover:text-white transition-colors">Busca por Período</button>
         </div>
 
         <!-- Conteúdo do Formulário -->
@@ -408,6 +409,30 @@
     </div>
 </div>
 
+        <!-- Aba: Busca por Período (Relatórios) -->
+<div id="relatorios-view" class="hidden container-card p-6 mt-8">
+    <h2 class="text-xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Busca Avançada por Período</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+            <label class="block text-sm text-gray-400 mb-1">Data Inicial</label>
+            <input type="date" id="data-inicio" class="w-full bg-gray-700 text-white rounded-lg p-2 border border-gray-600">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-400 mb-1">Data Final</label>
+            <input type="date" id="data-fim" class="w-full bg-gray-700 text-white rounded-lg p-2 border border-gray-600">
+        </div>
+        <div class="flex items-end">
+            <button id="btn-buscar-periodo" class="button-primary w-full">Buscar Período</button>
+        </div>
+    </div>
+
+    <!-- Resultado da Busca -->
+    <div id="resultado-periodo" class="hidden bg-gray-800 p-6 rounded-lg text-center mt-6">
+        <p class="text-sm text-gray-400 mb-2">Total de Encontros no Período Selecionado</p>
+        <p id="total-periodo" class="text-4xl font-bold text-green-400">0</p>
+    </div>
+</div>
     </main>
 
     <!-- Modal para mensagens de erro/sucesso -->
@@ -493,6 +518,8 @@ function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
             const allRecordsTabBtn = document.getElementById('all-records-tab-btn');
             const allRecordsView = document.getElementById('all-records-view');
             const allRecordsTableBody = document.getElementById('all-records-table-body');
+            const relatoriosTabBtn = document.getElementById('relatorios-tab-btn');
+const relatoriosView = document.getElementById('relatorios-view');
 
             const dateInput = document.getElementById('week-date');
             const eventRadios = document.querySelectorAll('input[name="evento"]');
@@ -556,10 +583,12 @@ function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
     formView.classList.add('hidden');
     historyView.classList.add('hidden');
     if (allRecordsView) allRecordsView.classList.add('hidden');
+                if (relatoriosView) relatoriosView.classList.add('hidden');
     
     // Remove a cor (active) de todos os botões
     formTabBtn.classList.remove('active');
     historyTabBtn.classList.remove('active');
+                if (relatoriosTabBtn) relatoriosTabBtn.classList.remove('active');
     if (allRecordsTabBtn) allRecordsTabBtn.classList.remove('active');
 
     // Mostra a tela correta baseada no botão clicado
@@ -574,12 +603,17 @@ function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
         if (allRecordsView) allRecordsView.classList.remove('hidden');
         if (allRecordsTabBtn) allRecordsTabBtn.classList.add('active');
     }
+                else if (view === 'relatorios') {
+    if (relatoriosView) relatoriosView.classList.remove('hidden');
+    if (relatoriosTabBtn) relatoriosTabBtn.classList.add('active');
+}
 } // Fim da function switchView
 
 // Listeners para os botões de navegação
 if (formTabBtn) formTabBtn.addEventListener('click', () => switchView('form'));
 if (historyTabBtn) historyTabBtn.addEventListener('click', () => switchView('history'));
 if (allRecordsTabBtn) allRecordsTabBtn.addEventListener('click', () => switchView('all-records'));
+            if (relatoriosTabBtn) relatoriosTabBtn.addEventListener('click', () => switchView('relatorios'));
 
             // Função para reduzir o tamanho da imagem antes do envio
 async function comprimirImagem(file, maxWidth = 800) {
@@ -692,7 +726,7 @@ async function comprimirImagem(file, maxWidth = 800) {
                     totalConvidados += week.convidados || 0;
                 });
 
-                if (totalEncontrosEl) totalEncontrosEl.textContent = data.length;
+                
                 if (totalBaseEl) totalBaseEl.textContent = totalBase;
                 if (totalMembrosEl) totalMembrosEl.textContent = totalMembros;
                 if (totalConvidadosEl) totalConvidadosEl.textContent = totalConvidados;
@@ -836,6 +870,7 @@ async function comprimirImagem(file, maxWidth = 800) {
                     });
 
                     if (monthlyEncontrosEl) monthlyEncontrosEl.textContent = filteredData.length;
+                    if (totalEncontrosEl) totalEncontrosEl.textContent = filteredData.length;
                     if (monthlyBaseEl) monthlyBaseEl.textContent = totalBase;
                     if (monthlyMembrosEl) monthlyMembrosEl.textContent = totalMembros;
                     if (monthlyConvidadosEl) monthlyConvidadosEl.textContent = totalConvidados;
@@ -1000,7 +1035,29 @@ function renderAllRecordsTable(data) {
     });
 }
             
+// --- Motor da Busca por Período ---
+    const btnBuscarPeriodo = document.getElementById('btn-buscar-periodo');
+    if (btnBuscarPeriodo) {
+        btnBuscarPeriodo.addEventListener('click', () => {
+            const dataInicio = document.getElementById('data-inicio').value;
+            const dataFim = document.getElementById('data-fim').value;
+            
+            if (!dataInicio || !dataFim) {
+                showModalMessage("Por favor, preencha a data inicial e final.");
+                return;
+            }
 
+            // Filtra os dados de todo o banco (allWeeklyData) usando as datas
+            const encontrosNoPeriodo = allWeeklyData.filter(item => {
+                return item.date >= dataInicio && item.date <= dataFim;
+            });
+
+            // Atualiza os números na tela
+            document.getElementById('total-periodo').textContent = encontrosNoPeriodo.length;
+            document.getElementById('resultado-periodo').classList.remove('hidden');
+        });
+    }
+            
             initializeFirebase();
         });
     </script>
