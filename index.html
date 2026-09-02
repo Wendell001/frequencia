@@ -653,7 +653,7 @@ async function comprimirImagem(file, maxWidth = 800) {
     const loginMessage = document.getElementById('login-message');
 
     // Ação de clicar no botão de login
-    btnLogin.addEventListener('', async () => {
+    btnLogin.addEventListener('click', async () => {
       try {
         await signInWithPopup(auth, provider);
       } catch (error) {
